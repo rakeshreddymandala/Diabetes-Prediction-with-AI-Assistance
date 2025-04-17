@@ -11,11 +11,10 @@ import AboutSection from "./components/about";
 
 function App() {
   const [hasVisited, setHasVisited] = useState(() => {
-    return sessionStorage.getItem("hasVisited") === "true"; // Check session storage
+    return sessionStorage.getItem("hasVisited") === "true";
   });
 
   const handleGetStarted = () => {
-    console.log("Get Started clicked!"); // Debugging
     sessionStorage.setItem("hasVisited", "true");
     setHasVisited(true);
   };
@@ -23,19 +22,22 @@ function App() {
   return (
     <Router>
       <Routes>
-        {/* Show Start page only on first visit */}
-        {!hasVisited ? (
-          <Route path="/" element={<Start onGetStarted={handleGetStarted} />} />
-        ) : (
-          <>
-            <Route path="/" element={<Navigate to="/home" replace />} />
-            <Route path="/home" element={<><Navbar /><Home /><Footer /></>} />
-            <Route path="/prediction" element={<><Navbar /><Prediction /><Footer /></>} />
-            <Route path="/ai-assistance" element={<><Navbar /><GlowingBorderBox /><Footer /></>} />
-            <Route path="/help" element={<><Navbar /><Help /><Footer /></>} />
-            <Route path="/about" element={<><Navbar /><AboutSection /><Footer /></>} />
-          </>
-        )}
+        <Route 
+          path="/" 
+          element={
+            !hasVisited ? (
+              <Start onGetStarted={handleGetStarted} />
+            ) : (
+              <Navigate to="/home" replace />
+            )
+          } 
+        />
+        <Route path="/home" element={<><Navbar /><Home /><Footer /></>} />
+        <Route path="/prediction" element={<><Navbar /><Prediction /><Footer /></>} />
+        <Route path="/ai-assistance" element={<><Navbar /><GlowingBorderBox /><Footer /></>} />
+        <Route path="/help" element={<><Navbar /><Help /><Footer /></>} />
+        <Route path="/about" element={<><Navbar /><AboutSection /><Footer /></>} />
+        <Route path="*" element={<Navigate to={hasVisited ? "/home" : "/"} replace />} />
       </Routes>
     </Router>
   );

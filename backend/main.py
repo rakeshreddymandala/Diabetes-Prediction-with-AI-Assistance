@@ -1,24 +1,48 @@
+# 1. Set TensorFlow logging level to only show errors (suppress info and warnings)
+# Level 0 -> all messages are logged (default)
+# Level 1 -> INFO messages are not printed
+# Level 2 -> INFO and WARNING messages are not printed
+# Level 3 -> INFO, WARNING, and ERROR messages are not printed
+import os
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
+
+# 2. Import TensorFlow after setting environment variable
+import tensorflow as tf
+
+# 3. Suppress TensorFlow logging at the logger level (backup suppression)
+tf.get_logger().setLevel('ERROR')
+
+# 4. Configure custom logging to make important messages more visible
+import logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
+
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
-import google.generativeai as genai
-import tensorflow as tf
+from huggingface_hub import InferenceClient
 import numpy as np
 import pickle
-import os
 from sklearn.preprocessing import StandardScaler
 from dotenv import load_dotenv
 
 # Load environment variables
 load_dotenv()
 
-app = FastAPI()
+app = FastAPI(
+    title="Diabetes Prediction API",
+    description="AI-powered diabetes prediction and assistance API",
+    version="1.0.0"
+)
 
 # ✅ Load trained ANN model safely
 model_path = os.path.join(os.path.dirname(__file__), "deeplearning.keras")
 if os.path.exists(model_path):
     model = tf.keras.models.load_model(model_path)
-    print("✅ Model loaded successfully!")
+    logger.info("✅ Model loaded successfully!")
 else:
     raise RuntimeError("❌ Model file not found! Make sure ANN_Keras.keras exists.")
 
@@ -27,15 +51,19 @@ scaler_path = os.path.join(os.path.dirname(__file__), "scaler.pkl")
 if os.path.exists(scaler_path):
     with open(scaler_path, "rb") as f:
         scaler = pickle.load(f)
-    print("✅ Scaler loaded successfully!")
+    logger.info("✅ Scaler loaded successfully!")
 else:
     raise RuntimeError("❌ Scaler file not found! Make sure scaler.pkl exists.")
 
-# ✅ Configure Google Gemini API from .env
-GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
-if not GOOGLE_API_KEY:
-    raise RuntimeError("❌ GOOGLE_API_KEY is missing in .env file!")
-genai.configure(api_key=GOOGLE_API_KEY)
+# ✅ Configure Hugging Face Client
+HUGGINGFACE_API_KEY = os.getenv("HUGGINGFACE_API_KEY")
+if not HUGGINGFACE_API_KEY:
+    raise RuntimeError("❌ HUGGINGFACE_API_KEY is missing in .env file!")
+
+client = InferenceClient(
+    model="mistralai/Mistral-7B-Instruct-v0.3",
+    token=HUGGINGFACE_API_KEY
+)
 
 # ✅ Enable CORS
 app.add_middleware(
@@ -69,48 +97,61 @@ def predict_diabetes(data: PredictionInput):
             data.pregnancies, data.glucose, data.bloodPressure,
             data.skinThickness, data.insulin, data.bmi,
             data.diabetesPedigreeFunction, data.age
-        ]]).reshape(1, -1)  # 🔥 Ensure correct shape for model
+        ]]).reshape(1, -1)
 
         # Scale input data
         input_scaled = scaler.transform(input_data)  
 
         # Make prediction
         prediction = model.predict(input_scaled)
-        predicted_class = np.argmax(prediction)  # Get class with highest probability
+        predicted_class = np.argmax(prediction)
 
         # Format result based on predicted class
         result = "The patient has diabetes" if predicted_class == 1 else "The patient does not have diabetes"
+        probability = float(prediction[0][predicted_class])  # Get prediction probability
 
-        return {"result": result}
+        return {
+            "result": result,
+            "probability": f"{probability:.2%}",
+            "risk_level": "High" if probability > 0.7 else "Medium" if probability > 0.4 else "Low"
+        }
     
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"❌ Prediction Error: {str(e)}")
-
 
 # ✅ AI Assistance API
 @app.post("/ai-assist")
 async def ai_assistance(data: AIRequest):
     try:
-        # 🔥 Add a structured prompt
-        # 🔥 Improved AI Prompt
-        prompt = (
-            f"{data.result}. Based on this, provide a detailed yet easy-to-understand explanation of diabetes, "
-            f"including its causes, symptoms, and impact on health. Then, offer a structured, practical health guide "
-            f"covering lifestyle changes, diet recommendations, exercise routines, and overall well-being. Ensure the "
-            f"advice is clear, specific, and actionable, avoiding vague or generic tips. Use a supportive and encouraging "
-            f"tone to motivate the user to make positive health choices."
+        # Create a structured prompt for Mistral
+        prompt = f"""[INST] As a medical AI assistant, analyze this diabetes prediction result: {data.result}
+
+Please provide:
+1. A clear explanation of what this means
+2. Key health implications
+3. Actionable lifestyle recommendations
+4. Diet and exercise suggestions
+5. When to seek medical attention
+
+Keep the response concise but informative, using simple language.
+[/INST]"""
+
+        # Get response from Mistral
+        response = client.text_generation(
+            prompt,
+            max_new_tokens=150,
+            temperature=0.7,
+            top_p=0.95,
+            repetition_penalty=1.15
         )
 
+        if not response:
+            raise HTTPException(status_code=500, detail="❌ Empty response from AI model")
 
-        model = genai.GenerativeModel("gemini-1.5-pro")
-        response = model.generate_content(prompt, generation_config={"max_output_tokens": 250})
+        # Clean and format the response
+        formatted_response = response.strip().replace("[/INST]", "").replace("[INST]", "")
 
-        # ✅ Handle AI response properly
-        if response and hasattr(response, "text"):
-            return {"assistance": response.text}
-        elif response and response.candidates:
-            return {"assistance": response.candidates[0].content.parts[0].text}
-        else:
-            raise HTTPException(status_code=500, detail="❌ AI response is empty!")
+        return {"assistance": formatted_response}
+    
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"❌ AI Assistance Error: {str(e)}")

@@ -1,7 +1,6 @@
 import { motion } from "framer-motion";
 import DiabetesInfo from "../components/DiabetesInfo";
 import ModelDetails from "../components/modeldetails";
-import { div } from "framer-motion/client";
 import { useLocation } from "react-router-dom";
 import { useEffect } from "react";
 import AIIntro from "../components/aiintro";

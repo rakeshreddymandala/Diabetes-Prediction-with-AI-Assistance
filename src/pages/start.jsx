@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 
-const text = "Boost your productivity. Start using our app today.";
+const text = "Early detection, smarter decisions. Get started with MyApp";
 
 export default function Start({ onGetStarted }) {
   const navigate = useNavigate();
@@ -32,20 +32,17 @@ export default function Start({ onGetStarted }) {
     }
   }, [index, blinkCount]);
 
-  // Function to handle "Get Started" button click
-  // const handleGetStarted = () => {
-  //   localStorage.setItem("hasVisited", "true"); // Save visit status
-  //   onGetStarted(); // Update state in App.jsx
-  //   setTimeout(() => {
-  //     navigate("/home"); // Ensure navigation after state update
-  //   }, 100); // Small delay to allow React to update state
-  // };  
   const handleGetStarted = () => {
     sessionStorage.setItem("hasVisited", "true"); // Store session visit status
     onGetStarted();
     navigate("/home");
   };
-  
+
+  const handleLearnMore = () => {
+    sessionStorage.setItem("hasVisited", "true");
+    onGetStarted();
+    navigate("/about");
+  };
 
   return (
     <div className="h-screen w-screen bg-white flex items-center justify-center">
@@ -65,7 +62,7 @@ export default function Start({ onGetStarted }) {
               )}
             </h2>
             <p className="mt-6 text-xl lg:text-2xl text-gray-300">
-              Ac euismod vel sit maecenas id pellentesque eu sed consectetur. Malesuada adipiscing sagittis vel nulla.
+              AI-powered diabetes prediction with smart insights for better health decisions.Intelligent health predictions with cutting-edge AI technology.
             </p>
             <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-6">
               <button
@@ -74,9 +71,12 @@ export default function Start({ onGetStarted }) {
               >
                 Get started
               </button>
-              <a href="#" className="text-lg font-semibold text-white">
+              <button 
+                onClick={handleLearnMore}
+                className="text-lg font-semibold text-white hover:text-blue-400 transition"
+              >
                 Learn more <span aria-hidden="true">→</span>
-              </a>
+              </button>
             </div>
           </div>
         </div>

@@ -1,5 +1,3 @@
-import { link } from "framer-motion/client";
-
 const links = [
     { name: "Diabetes Prediction", href: "/prediction" },
     { name: "AI Assistance", href: "/ai-assistance" },
@@ -47,4 +45,3 @@ const links = [
       </div>
     );
   }
-  

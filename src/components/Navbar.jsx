@@ -6,7 +6,7 @@ function Navbar() {
   return (
     <nav className="flex items-center justify-between px-8 py-4 bg-gray-800 text-white">
       {/* Logo and Website Name */}
-      <Link to="/" className="flex items-center space-x-2">
+      <Link to="/home" className="flex items-center space-x-2">
         <img 
           src="src\assets\logo.webp"  // Ensure logo is in "public/images/logo.png"
           alt="MyApp Logo" 
@@ -19,7 +19,7 @@ function Navbar() {
 
       <ul className="flex space-x-6">
         {[
-          { name: "Home", path: "/" },
+          { name: "Home", path: "/home" }, // Changed from "/" to "/home"
           { name: "Prediction", path: "/prediction" },
           { name: "AI-Assistance", path: "/ai-assistance" },
           { name: "Help", path: "/help" },
