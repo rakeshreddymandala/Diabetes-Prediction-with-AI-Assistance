@@ -45,9 +45,22 @@ export default function Start({ onGetStarted }) {
   };
 
   return (
-    <div className="h-screen w-screen bg-white flex items-center justify-center">
-      <div className="w-full h-full flex items-center justify-center">
-        <div className="relative isolate overflow-hidden bg-gray-900 px-6 py-16 shadow-2xl sm:rounded-none sm:px-16 md:py-24 w-full h-full flex items-center justify-center">
+    <div className="bg-white">
+      <div className="w-full h-screen flex items-center justify-center">
+        <div className="relative isolate overflow-hidden bg-gray-900 px-6 pt-16 shadow-2xl sm:px-16 md:pt-24 lg:px-24 w-full h-full flex items-center justify-center">
+          <svg
+            viewBox="0 0 1024 1024"
+            aria-hidden="true"
+            className="absolute top-1/2 left-1/2 -z-10 size-[64rem] -translate-y-1/2 [mask-image:radial-gradient(closest-side,white,transparent)] sm:left-full sm:-ml-80 lg:left-1/2 lg:ml-0 lg:-translate-x-1/2 lg:translate-y-0"
+          >
+            <circle cx={512} cy={512} r={512} fill="url(#gradient)" fillOpacity="0.7" />
+            <defs>
+              <radialGradient id="gradient">
+                <stop stopColor="#7775D6" />
+                <stop offset={1} stopColor="#E935C1" />
+              </radialGradient>
+            </defs>
+          </svg>
           <div className="mx-auto max-w-2xl text-center flex flex-col items-center justify-center">
             <h2 className="text-4xl sm:text-5xl lg:text-6xl font-semibold tracking-tight text-white">
               {displayText}
