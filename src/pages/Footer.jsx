@@ -80,7 +80,7 @@ function Footer() {
                 </a>
               </li>
               <li>
-                <a href="/about" className="text-gray-300 hover:text-blue-400 transition-colors text-sm">
+                <a href="/about#main" className="text-gray-300 hover:text-blue-400 transition-colors text-sm">
                   About Us
                 </a>
               </li>

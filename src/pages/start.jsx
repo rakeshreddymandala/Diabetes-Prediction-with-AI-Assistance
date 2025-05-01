@@ -41,7 +41,7 @@ export default function Start({ onGetStarted }) {
   const handleLearnMore = () => {
     sessionStorage.setItem("hasVisited", "true");
     onGetStarted();
-    navigate("/about");
+    navigate("/about#main");
   };
 
   return (

@@ -23,7 +23,7 @@ function Navbar() {
           { name: "Prediction", path: "/prediction" },
           { name: "AI-Assistance", path: "/ai-assistance" },
           { name: "Help", path: "/help" },
-          { name: "About", path: "/about" },
+          { name: "About", path: "/about#main" },
         ].map((item) => (
           <li key={item.name} className="relative group cursor-pointer">
             <Link 

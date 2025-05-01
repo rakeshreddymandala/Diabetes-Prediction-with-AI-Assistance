@@ -1,6 +1,9 @@
+import { useEffect, useRef } from "react";
+import { useLocation } from "react-router-dom";
+
 const links = [
-    { name: "Diabetes Prediction", href: "/prediction" },
-    { name: "AI Assistance", href: "/ai-assistance" },
+    { name: "Diabetes Prediction", href: "/prediction#main" },
+    { name: "AI Assistance", href: "/ai-assistance#main" },
     { name: "Model Details", href: "/home#model-details" },
 ];
   
@@ -12,8 +15,17 @@ const stats = [
 ];
   
 export default function AboutSection() {
+    const aboutRef = useRef(null);
+    const location = useLocation();
+
+    useEffect(() => {
+        if (location.hash === '#main' && aboutRef.current) {
+            aboutRef.current.scrollIntoView({ behavior: 'smooth' });
+        }
+    }, [location]);
+
     return (
-        <div className="relative isolate overflow-hidden bg-gray-900 py-24 sm:py-32">
+        <div ref={aboutRef} className="relative isolate overflow-hidden bg-gray-900 py-24 sm:py-32">
             <img
                 src="https://images.unsplash.com/photo-1521737604893-d14cc237f11d?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&crop=focalpoint&fp-y=.8&w=2830&h=1500&q=80&blend=111827&sat=-100&exp=15&blend-mode=multiply"
                 alt=""
