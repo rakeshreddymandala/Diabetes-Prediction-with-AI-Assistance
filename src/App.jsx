@@ -34,7 +34,7 @@ function App() {
         />
         <Route path="/home" element={<><Navbar /><Home /><Footer /></>} />
         <Route path="/prediction" element={<><Navbar /><Prediction /><Footer /></>} />
-        <Route path="/ai-assistance" element={<><Navbar /><GlowingBorderBox /><Footer /></>} />
+        <Route path="/ai-assistance" element={<><Navbar /><GlowingBorderBox /></>} />
         <Route path="/help" element={<><Navbar /><Help /><Footer /></>} />
         <Route path="/about" element={<><Navbar /><AboutSection /><Footer /></>} />
         <Route path="*" element={<Navigate to={hasVisited ? "/home" : "/"} replace />} />
