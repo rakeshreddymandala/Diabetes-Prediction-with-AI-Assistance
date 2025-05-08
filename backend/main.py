@@ -28,6 +28,58 @@ import numpy as np
 import pickle
 from sklearn.preprocessing import StandardScaler
 from dotenv import load_dotenv
+from langchain_core.language_models import LLM
+import requests
+from typing import Any, List, Optional
+from langchain_huggingface import HuggingFaceEmbeddings
+from langchain_core.prompts import PromptTemplate
+from langchain.chains import RetrievalQA
+from langchain_community.vectorstores import FAISS
+
+# Custom OpenRouter LLM Implementation
+class OpenRouterLLM(LLM):
+    api_key: str
+    model: str
+    
+    def _call(self, prompt: str, stop: Optional[List[str]] = None) -> str:
+        headers = {
+            "HTTP-Referer": "https://localhost",  # Required for OpenRouter
+            "Authorization": f"Bearer {self.api_key}"
+        }
+        
+        response = requests.post(
+            "https://openrouter.ai/api/v1/chat/completions",
+            headers=headers,
+            json={
+                "model": self.model,
+                "messages": [{"role": "user", "content": prompt}],
+                "max_tokens": 512,
+                "temperature": 0.3
+            }
+        )
+        
+        if response.status_code == 200:
+            return response.json()["choices"][0]["message"]["content"]
+        else:
+            raise Exception(f"Error from OpenRouter API: {response.text}")
+
+    @property
+    def _llm_type(self) -> str:
+        return "openrouter"
+
+# Load environment variables
+load_dotenv()
+
+OPEN_ROUTER_API_KEY = os.getenv("OPEN_ROUTER_API_KEY")
+OPENROUTER_MODEL = os.getenv("OPENROUTER_MODEL")
+
+if not OPEN_ROUTER_API_KEY:
+    raise RuntimeError("❌ OPEN_ROUTER_API_KEY is missing in .env file!")
+
+llm = OpenRouterLLM(
+    api_key=OPEN_ROUTER_API_KEY,
+    model=OPENROUTER_MODEL
+)
 
 # Load environment variables
 load_dotenv()
@@ -87,6 +139,65 @@ class PredictionInput(BaseModel):
 
 class AIRequest(BaseModel):
     result: str  # Expecting "Yes" or "No"
+
+class QueryInput(BaseModel):
+    query: str
+
+# ✅ RAG Components
+DB_FAISS_PATH = os.path.join(os.path.dirname(__file__), "vectorstore/db_faiss")
+CUSTOM_PROMPT_TEMPLATE = """
+You are an AI medical assistant. Use the provided context to generate a structured, informative answer.
+
+📌 **Guidelines:**
+- Provide a **clear and structured** answer.
+- Use **bullet points** and **bold headings** where needed.
+- Keep it **easy to read** for non-medical users.
+- End with a **medical disclaimer**.
+
+📌 **Context:**
+{context}
+
+📌 **User's Question:**
+{question}
+
+💡 **AI's Answer:**
+"""
+
+def custom_prompt(template):
+    return PromptTemplate(template=template, input_variables=["context", "question"])
+
+def is_medical_query(query: str, llm_instance: OpenRouterLLM) -> bool:
+    prompt = """
+    Classify the following question as 'medical' or 'non-medical'. 
+    - A 'medical' question is related to diseases, symptoms, medications, healthcare, treatments, or medical research.
+    - A 'non-medical' question is anything else.
+    Only respond with one word: 'medical' or 'non-medical'.
+    Query: {query}
+    """.format(query=query)
+    
+    response = llm_instance._call(prompt).strip().lower()
+    return "medical" in response
+
+# Initialize RAG components
+try:
+    embedding_model = HuggingFaceEmbeddings(
+        model_name="sentence-transformers/paraphrase-MiniLM-L3-v2"
+    )
+    if os.path.exists(DB_FAISS_PATH):
+        db = FAISS.load_local(DB_FAISS_PATH, embedding_model, allow_dangerous_deserialization=True)
+        qa_chain = RetrievalQA.from_chain_type(
+            llm=llm,
+            chain_type="stuff",
+            retriever=db.as_retriever(search_kwargs={'k': 7}),
+            return_source_documents=True,
+            chain_type_kwargs={'prompt': custom_prompt(CUSTOM_PROMPT_TEMPLATE)}
+        )
+        logger.info("✅ RAG components loaded successfully!")
+    else:
+        raise RuntimeError("❌ FAISS database not found!")
+except Exception as e:
+    logger.error(f"❌ Error loading RAG components: {str(e)}")
+    raise
 
 # ✅ Diabetes Prediction API
 @app.post("/predict")
@@ -155,3 +266,28 @@ Keep the response concise but informative, using simple language.
     
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"❌ AI Assistance Error: {str(e)}")
+
+# ✅ Query Assistance API using OpenRouter and RAG
+@app.post("/ask")
+async def query_assistance(data: QueryInput):
+    try:
+        # Check if query is medical-related
+        if not is_medical_query(data.query, llm):
+            return {"response": "I can only answer medical-related questions. Please ask about health or medicine."}
+        
+        # Use RAG chain to get response
+        response = qa_chain.invoke({
+            'query': data.query
+        })
+        
+        # Format response with sources
+        answer = response["result"]
+        sources = [str(doc) for doc in response["source_documents"]]
+        
+        return {
+            "response": answer,
+            "sources": sources  # Optional: Frontend can choose to display sources or not
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

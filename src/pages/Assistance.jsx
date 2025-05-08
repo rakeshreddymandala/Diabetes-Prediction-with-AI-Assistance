@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import SendIcon from '@mui/icons-material/Send';
 import Navbar from '../components/Navbar';
+import axios from 'axios';
 
 function Assistance() {
   const [query, setQuery] = useState('');
@@ -23,21 +24,26 @@ function Assistance() {
     const trimmedQuery = query.trim();
     if (!trimmedQuery) return;
 
-    // Add user message to chat
     setChatHistory(prev => [...prev, { type: 'user', message: trimmedQuery }]);
     setQuery('');
     setIsLoading(true);
 
     try {
-      // Simulate API call delay
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      const response = await axios.post('http://localhost:8000/ask', {
+        query: trimmedQuery  // Changed from 'question' to 'query'
+      });
 
-      // Add bot response
-      const responseMessage = `Thank you for your question about "${trimmedQuery}". As an AI medical assistant, I aim to provide general health information. However, for specific medical advice, please consult with a qualified healthcare professional.`;
-      setChatHistory(prev => [...prev, { type: 'bot', message: responseMessage }]);
+      setChatHistory(prev => [...prev, { 
+        type: 'bot', 
+        message: response.data.response 
+      }]);
+
     } catch (error) {
-      console.error('Error:', error);
-      setChatHistory(prev => [...prev, { type: 'bot', message: 'Sorry, I encountered an error. Please try again.' }]);
+      console.error('Error fetching response:', error);
+      setChatHistory(prev => [...prev, { 
+        type: 'bot', 
+        message: 'Sorry, I encountered an error. Please try again.',
+      }]);
     } finally {
       setIsLoading(false);
     }

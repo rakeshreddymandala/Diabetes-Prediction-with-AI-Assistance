@@ -1,9 +1,29 @@
-pydantic
+# Core Framework
 fastapi
 uvicorn
-huggingface_hub
-tensorflow
-numpy
-pandas
-scikit-learn
 python-dotenv
+
+# Transformers & Keras Dependencies
+tf-keras
+transformers
+tensorflow
+
+# Machine Learning & Data Science
+scikit-learn
+numpy
+
+# LangChain & RAG Components
+langchain
+langchain-core
+langchain-huggingface
+langchain-community
+faiss-cpu
+sentence-transformers
+
+# API & Utilities
+pydantic
+python-multipart
+huggingface-hub
+requests
+python-jose
+typing-extensions
