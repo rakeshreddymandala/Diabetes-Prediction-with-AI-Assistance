@@ -1,11 +1,11 @@
-import { FaLinkedin, FaGithub, FaInstagram, FaPhone, FaEnvelope, FaMapMarkerAlt } from "react-icons/fa";
+import { FaLinkedin, FaGithub, FaInstagram, FaPhone, FaEnvelope, FaMapMarkerAlt, FaBook, FaQuestion, FaBlog } from "react-icons/fa";
 
 function Footer() {
   return (
     <footer className="bg-gray-800 text-white">
       {/* Main Footer Content */}
       <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Company Info */}
           <div>
             <h3 className="text-lg font-semibold mb-4">About MyApp</h3>
@@ -65,6 +65,11 @@ function Footer() {
             <h3 className="text-lg font-semibold mb-4">Quick Links</h3>
             <ul className="space-y-2">
               <li>
+                <a href="/home" className="text-gray-300 hover:text-blue-400 transition-colors text-sm">
+                  Home
+                </a>
+              </li>
+              <li>
                 <a href="/prediction" className="text-gray-300 hover:text-blue-400 transition-colors text-sm">
                   Diabetes Prediction
                 </a>
@@ -82,6 +87,31 @@ function Footer() {
               <li>
                 <a href="/about#main" className="text-gray-300 hover:text-blue-400 transition-colors text-sm">
                   About Us
+                </a>
+              </li>
+            </ul>
+          </div>
+
+          {/* Resources section */}
+          <div>
+            <h3 className="text-lg font-semibold mb-4">Resources</h3>
+            <ul className="space-y-2">
+              <li className="flex items-center gap-2">
+                <FaBook className="text-blue-400" />
+                <a href="/documentation" className="text-gray-300 hover:text-blue-400 transition-colors text-sm">
+                  Documentation
+                </a>
+              </li>
+              <li className="flex items-center gap-2">
+                <FaQuestion className="text-blue-400" />
+                <a href="/faq" className="text-gray-300 hover:text-blue-400 transition-colors text-sm">
+                  FAQs
+                </a>
+              </li>
+              <li className="flex items-center gap-2">
+                <FaBlog className="text-blue-400" />
+                <a href="/blog" className="text-gray-300 hover:text-blue-400 transition-colors text-sm">
+                  Blog
                 </a>
               </li>
             </ul>
