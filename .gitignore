@@ -1,19 +1,32 @@
+# Dependencies
+frontend/node_modules
+frontend/.pnp
+frontend/.pnp.js
+
+# Testing
+frontend/coverage
+
+# Production
+frontend/dist
+frontend/dist-ssr
+frontend/build
+
+# Environment files
+frontend/.env
+frontend/.env.local
+frontend/.env.development.local
+frontend/.env.test.local
+frontend/.env.production.local
+frontend/*.local
+
 # Logs
 logs
 *.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
-lerna-debug.log*
-
-node_modules
-dist
-dist-ssr
-*.local
-
-venv/
-*.env
+frontend/npm-debug.log*
+frontend/yarn-debug.log*
+frontend/yarn-error.log*
+frontend/pnpm-debug.log*
+frontend/lerna-debug.log*
 
 # Editor directories and files
 .vscode/*
@@ -25,3 +38,30 @@ venv/
 *.njsproj
 *.sln
 *.sw?
+
+# Python backend
+backend/__pycache__/
+backend/*.py[cod]
+backend/*$py.class
+backend/*.so
+backend/env/
+backend/venv/
+backend/.env
+backend/*.keras
+backend/*.pkl
+backend/*.h5
+backend/dist/
+backend/build/
+backend/*.egg-info/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+*/.ipynb_checkpoints/*
+
+# Database
+*.db
+*.sqlite3
+
+# Misc
+.DS_Store
+*.pem
