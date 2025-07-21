@@ -90,6 +90,79 @@ app = FastAPI(
     version="1.0.0"
 )
 
+# Enable CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Lazy loading imports
+from functools import lru_cache
+import asyncio
+from typing import Any, List, Optional
+
+# Cache loaders
+@lru_cache()
+def load_ml_model():
+    model_path = os.path.join(os.path.dirname(__file__), "deeplearning.keras")
+    if os.path.exists(model_path):
+        model = tf.keras.models.load_model(model_path)
+        logger.info("✅ Model loaded successfully!")
+        return model
+    raise RuntimeError("❌ Model file not found!")
+
+@lru_cache()
+def load_scaler():
+    scaler_path = os.path.join(os.path.dirname(__file__), "scaler.pkl")
+    if os.path.exists(scaler_path):
+        with open(scaler_path, "rb") as f:
+            scaler = pickle.load(f)
+        logger.info("✅ Scaler loaded successfully!")
+        return scaler
+    raise RuntimeError("❌ Scaler file not found!")
+
+@lru_cache()
+def load_rag_components():
+    try:
+        embedding_model = HuggingFaceEmbeddings(
+            model_name="sentence-transformers/paraphrase-MiniLM-L3-v2",
+            cache_folder="model_cache",
+            model_kwargs={'device': 'cpu'},
+            encode_kwargs={'device': 'cpu', 'batch_size': 32}
+        )
+        db = FAISS.load_local(
+            DB_FAISS_PATH, 
+            embedding_model,
+            allow_dangerous_deserialization=True
+        )
+        qa_chain = RetrievalQA.from_chain_type(
+            llm=llm,
+            chain_type="stuff",
+            retriever=db.as_retriever(search_kwargs={'k': 7}),
+            return_source_documents=True,
+            chain_type_kwargs={'prompt': custom_prompt(CUSTOM_PROMPT_TEMPLATE)}
+        )
+        logger.info("✅ RAG components loaded successfully!")
+        return qa_chain
+    except Exception as e:
+        logger.error(f"❌ Error loading RAG components: {str(e)}")
+        raise
+
+# Initialize components on first request
+@app.on_event("startup")
+async def startup_event():
+    # Start loading ML components in background
+    asyncio.create_task(initialize_components())
+
+async def initialize_components():
+    await asyncio.gather(
+        asyncio.to_thread(load_ml_model),
+        asyncio.to_thread(load_scaler)
+    )
+
 # ✅ Load trained ANN model safely
 model_path = os.path.join(os.path.dirname(__file__), "deeplearning.keras")
 if os.path.exists(model_path):
@@ -201,8 +274,12 @@ except Exception as e:
 
 # ✅ Diabetes Prediction API
 @app.post("/predict")
-def predict_diabetes(data: PredictionInput):
+async def predict_diabetes(data: PredictionInput):
     try:
+        # Load model and scaler on first use
+        model = load_ml_model()
+        scaler = load_scaler()
+        
         # Convert input to NumPy array and reshape it
         input_data = np.array([[
             data.pregnancies, data.glucose, data.bloodPressure,
@@ -275,18 +352,13 @@ async def query_assistance(data: QueryInput):
         if not is_medical_query(data.query, llm):
             return {"response": "I can only answer medical-related questions. Please ask about health or medicine."}
         
-        # Use RAG chain to get response
-        response = qa_chain.invoke({
-            'query': data.query
-        })
-        
-        # Format response with sources
-        answer = response["result"]
-        sources = [str(doc) for doc in response["source_documents"]]
+        # Lazy load RAG components
+        qa_chain = load_rag_components()
+        response = qa_chain.invoke({'query': data.query})
         
         return {
-            "response": answer,
-            "sources": sources  # Optional: Frontend can choose to display sources or not
+            "response": response["result"],
+            "sources": [str(doc) for doc in response["source_documents"]]
         }
         
     except Exception as e:
