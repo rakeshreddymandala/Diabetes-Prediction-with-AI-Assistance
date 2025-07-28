@@ -1,4 +1,5 @@
 import { motion } from "framer-motion";
+import { useState } from "react";
 
 const primaryFeatures = [
   { name: "Retrieval-Augmented Generation (RAG)", description: "Enhances AI responses by retrieving relevant data from medical research papers and knowledge bases before generating answers." },
@@ -13,6 +14,8 @@ const secondaryFeatures = [
 ];
 
 export default function AIIntro() {
+  const [imageError, setImageError] = useState(false);
+
   return (
     <div className="bg-gray-900 py-24 sm:py-5">
       <div className="mx-auto max-w-7xl px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
@@ -58,11 +61,19 @@ export default function AIIntro() {
           transition={{ duration: 0.8, ease: "easeOut" }}
           className="flex justify-center"
         >
-          <img
-            src="src/assets/all.webp"
-            alt="AI Concepts - RAG, LangChain, Hugging Face, Fine-Tuning"
-            className="rounded-lg bg-gray-800 shadow-lg w-full max-w-md sm:max-w-lg md:max-w-xl"
-          />
+          {!imageError ? (
+            <img
+              src="/src/assets/all.webp"
+              alt="AI Concepts - RAG, LangChain, Hugging Face, Fine-Tuning"
+              className="rounded-lg bg-gray-800 shadow-lg w-full max-w-md sm:max-w-lg md:max-w-xl"
+              onError={() => setImageError(true)}
+              loading="lazy"
+            />
+          ) : (
+            <div className="rounded-lg bg-gray-800 shadow-lg w-full max-w-md sm:max-w-lg md:max-w-xl h-64 flex items-center justify-center">
+              <p className="text-gray-400">AI Concepts Illustration</p>
+            </div>
+          )}
         </motion.div>
 
       </div>
