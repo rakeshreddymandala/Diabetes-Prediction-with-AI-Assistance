@@ -47,9 +47,6 @@ backend/*.so
 backend/env/
 backend/venv/
 backend/.env
-backend/*.keras
-backend/*.pkl
-backend/*.h5
 backend/dist/
 backend/build/
 backend/*.egg-info/
@@ -65,3 +62,7 @@ backend/*.egg-info/
 # Misc
 .DS_Store
 *.pem
+
+# Model cache (you might want to ignore these)
+backend/model_cache/
+backend/vectorstore/
